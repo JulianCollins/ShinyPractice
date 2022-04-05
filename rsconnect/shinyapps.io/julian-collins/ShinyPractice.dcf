@@ -1,0 +1,13 @@
+name: ShinyPractice
+title: ShinyPractice
+username:
+account: julian-collins
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 4671770
+bundleId: 5040734
+url: https://julian-collins.shinyapps.io/ShinyPractice/
+when: 1631826441.10702
+lastSyncTime: 1631826441.10703
+asMultiple: FALSE
+asStatic: FALSE
