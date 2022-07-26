@@ -5,3 +5,12 @@
 
 # data inputs
 *.Rds
+
+# Mac
+.DS_Store
+
+# outputs
+*.html
+
+# folders
+runTimeShinyPreRendered_data

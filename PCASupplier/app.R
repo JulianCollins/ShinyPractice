@@ -27,7 +27,7 @@ ui <- fluidPage(
                         choices = NULL)
         ),
 
-        # Show a plot of the generated distribution
+        # 
         mainPanel(
           plotOutput("chapterNIC")
           )
@@ -35,7 +35,7 @@ ui <- fluidPage(
     )
 
 
-# Define server logic required to draw a histogram
+# 
 server <- function(input, output, session) {
   updateSelectizeInput(
     session, 
