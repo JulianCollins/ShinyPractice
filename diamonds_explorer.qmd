@@ -7,8 +7,13 @@ server: shiny
 
 ```{r}
 #| context: setup
+#| 
 library(ggplot2)
+library(DT)
+library(reactable)
+
 dataset <- diamonds
+
 ```
 
 # {.sidebar}
@@ -45,7 +50,8 @@ plotOutput('plot')
 # Data
 
 ```{r}
-tableOutput('data')
+#dataTableOutput('data')
+reactableOutput('table')
 ```
 
 ```{r}
@@ -59,7 +65,9 @@ output$plot <- renderPlot({
   
   p <- ggplot(
     dataset(), 
-    aes_string(x=input$x, y=input$y)) + geom_point()
+    aes_string(x=input$x, y=input$y)) + 
+    geom_point() +
+    theme_light()
   
   if (input$color != 'None')
     p <- p + aes_string(color=input$color)
@@ -77,7 +85,11 @@ output$plot <- renderPlot({
   
 })
 
-output$data <- renderTable({
-  dataset()
+# output$data <- renderDataTable({
+#   dataset()
+# })
+
+output$data <- renderReactable({
+  reactable(dataset)
 })
 ```

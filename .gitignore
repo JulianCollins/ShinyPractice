@@ -5,12 +5,18 @@
 
 # data inputs
 *.Rds
+*.csv
+bgts_cgm/.csv
 
 # Mac
 .DS_Store
 
 # outputs
 *.html
+*.css
+*.js
+*.woff
 
 # folders
 runTimeShinyPreRendered_data
+bgts_shiny_files

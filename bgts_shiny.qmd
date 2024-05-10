@@ -1,0 +1,73 @@
+---
+title: "BGTS"
+author: "Julian Collins - Medicines Value & Access"
+format: dashboard
+server: shiny
+---
+
+```{r}
+#| context: setup
+library(shiny)
+library(plotly)
+library(tidyverse)
+library(scales)
+library(zoo)
+
+bgts_cgm_geog_icb <- readRDS("bgts_cgm/bgts_cgm_geog_icb.Rds")
+
+bgts_cgm_geog_icb$year_month2 <- as.yearmon(as.character(bgts_cgm_geog_icb$year_month3), "%Y%m")
+
+```
+
+
+```{r}
+#| panel: sidebar
+selectizeInput("icb",
+                "Select ICB:",
+                choices = bgts_cgm_geog_icb$icb,
+                multiple = T)
+
+```
+
+
+```{r}
+#| panel: fill
+plotlyOutput('line_nic')
+```
+
+
+```{r}
+#| context: server
+
+ output$line_nic <- renderPlotly({
+      #
+      sp <- bgts_cgm_geog_icb |> 
+        filter(bnf_chemical_substance == "Glucose blood testing reagents") |> 
+        filter(icb %in% input$icb) |> 
+        group_by(bnf_chemical_substance, icb, year_month2) |> 
+        summarise(net_ingredient_cost = sum(net_ingredient_cost)) |> 
+        ungroup() 
+        # 
+      validate(
+        need(input$icb, "Please select one or more ICB areas")
+      )
+     ggplotly(
+        sp |> 
+        ggplot(aes(x = year_month2, y = net_ingredient_cost, group = icb, colour = icb
+                   )) +
+        geom_line() +
+        #geom_point() +
+        geom_point(aes(text = paste0(icb, "\n",
+                                      year_month2, "\n",
+                                      bnf_chemical_substance, "\n",
+                                      "NIC: £", prettyNum(net_ingredient_cost, big.mark = ",")))) +
+        theme_minimal() +
+        scale_y_continuous(labels = comma, limits = c(0, NA)) +
+        labs(x = "", y = "Net Ingredient Cost"),
+        tooltip = 'text', dynamicTicks = T) |> 
+     layout(showlegend = F)
+     #layout(showlegend = F)
+        
+    })
+
+```
