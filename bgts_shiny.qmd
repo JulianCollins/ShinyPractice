@@ -12,6 +12,7 @@ library(plotly)
 library(tidyverse)
 library(scales)
 library(zoo)
+library(DT)
 
 bgts_cgm_geog_icb <- readRDS("bgts_cgm/bgts_cgm_geog_icb.Rds")
 
@@ -20,12 +21,19 @@ bgts_cgm_geog_icb$year_month2 <- as.yearmon(as.character(bgts_cgm_geog_icb$year_
 ```
 
 
-```{r}
+```{r out.height="100%"}
 #| panel: sidebar
+
+# select icb
 selectizeInput("icb",
                 "Select ICB:",
                 choices = bgts_cgm_geog_icb$icb,
                 multiple = T)
+
+# filter nic
+sliderInput("nic",
+            "NIC range:",
+            min = 0, max = max(bgts_cgm_geog_icb$net_ingredient_cost), value = c(0, 1e5))
 
 ```
 
@@ -34,19 +42,76 @@ selectizeInput("icb",
 ```{r}
 #| panel: fill
 plotlyOutput('line_nic')
+
+plotlyOutput('line_items')
+
+
+#dataTableOutput('table_nic')
+
 ```
+
+
+
+<!-- ```{r} -->
+<!-- #| panel: fill -->
+<!-- plotlyOutput('line_items') -->
+
+<!-- #dataTableOutput('table_nic') -->
+
+<!-- ``` -->
+
 
 
 ```{r}
 #| context: server
 
+ nic_reactive <- reactive({bgts_cgm_geog_icb |> 
+        filter(bnf_chemical_substance == "Glucose blood testing reagents") |> 
+        filter(icb %in% input$icb) |> 
+        filter(year_month2 <= "Jul 2022") |> 
+        group_by(bnf_chemical_substance, icb, year_month2) |> 
+        summarise(net_ingredient_cost = sum(net_ingredient_cost)) |> 
+        filter(net_ingredient_cost >= input$nic[1] & net_ingredient_cost <= input$nic[2]) |> 
+        ungroup() 
+ })
+
  output$line_nic <- renderPlotly({
+      #
+      
+        # 
+      validate(
+        need(input$icb, "Please select one or more ICB areas")
+      )
+     ggplotly(
+        nic_reactive() |> 
+        ggplot(aes(x = year_month2, y = net_ingredient_cost, group = icb, colour = icb
+                   )) +
+        geom_line(linewidth = 1) +
+        geom_point(aes(text = paste0(icb, "\n",
+                                     year_month2, "\n",
+                                     bnf_chemical_substance, "\n",
+                                     "NIC: £", prettyNum(net_ingredient_cost, big.mark = ","))), 
+                   shape = 21, fill = 'white', size = 2) +
+        theme_minimal() +
+        scale_y_continuous(labels = comma, limits = c(0, NA)) +
+        labs(x = "", y = "Net Ingredient Cost"),
+        tooltip = 'text', dynamicTicks = T) |> 
+     layout(showlegend = F, 
+            xaxis = list(autorange = F, range = c(2021.25, 2022.583)))
+     #layout(showlegend = F)
+        
+    })
+
+
+
+output$line_items <- renderPlotly({
       #
       sp <- bgts_cgm_geog_icb |> 
         filter(bnf_chemical_substance == "Glucose blood testing reagents") |> 
         filter(icb %in% input$icb) |> 
+        filter(year_month2 <= "Jul 2022") |> 
         group_by(bnf_chemical_substance, icb, year_month2) |> 
-        summarise(net_ingredient_cost = sum(net_ingredient_cost)) |> 
+        summarise(items = sum(items)) |> 
         ungroup() 
         # 
       validate(
@@ -54,21 +119,23 @@ plotlyOutput('line_nic')
       )
      ggplotly(
         sp |> 
-        ggplot(aes(x = year_month2, y = net_ingredient_cost, group = icb, colour = icb
+        ggplot(aes(x = year_month2, y = items, group = icb, colour = icb
                    )) +
-        geom_line() +
-        #geom_point() +
+        geom_line(linewidth = 1) +
         geom_point(aes(text = paste0(icb, "\n",
-                                      year_month2, "\n",
-                                      bnf_chemical_substance, "\n",
-                                      "NIC: £", prettyNum(net_ingredient_cost, big.mark = ",")))) +
+                                     year_month2, "\n",
+                                     bnf_chemical_substance, "\n",
+                                     "NIC: £", prettyNum(items, big.mark = ","))), 
+                   shape = 21, fill = 'white', size = 2) +
         theme_minimal() +
         scale_y_continuous(labels = comma, limits = c(0, NA)) +
-        labs(x = "", y = "Net Ingredient Cost"),
+        labs(x = "", y = "Number of Items"),
         tooltip = 'text', dynamicTicks = T) |> 
-     layout(showlegend = F)
+     layout(showlegend = F, 
+            xaxis = list(autorange = F, range = c(2021.25, 2022.583)))
      #layout(showlegend = F)
         
     })
+
 
 ```
