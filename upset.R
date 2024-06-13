@@ -12,3 +12,5 @@ listInput <- list(A = c("a", "b"), B = c(sample(letters, 10)), three = c(sample(
 
 
 upsetjs() %>% fromList(listInput) %>% interactiveChart()
+
+
