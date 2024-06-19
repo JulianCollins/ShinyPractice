@@ -1,6 +1,9 @@
 ---
 title: "Upset Plot Walkthrough"
-output: html_document
+output: 
+  html_document:
+    self_contained: TRUE
+  
 ---
 
 ```{r setup, include=FALSE}
