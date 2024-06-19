@@ -6,6 +6,7 @@
 # data inputs
 *.Rds
 *.csv
+*.xlsx
 bgts_cgm/.csv
 
 # Mac
