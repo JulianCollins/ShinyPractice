@@ -1,0 +1,246 @@
+---
+title: "Upset Plot Walkthrough"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, cache = TRUE)
+```
+
+<br>
+
+```{r libraries}
+library(tidyverse)
+library(ComplexUpset)
+library(patchwork)
+```
+
+---
+
+**Report prepared by Julian Collins, `r format(Sys.Date(), "%B %e, %Y")`**
+
+---
+
+
+Please contact julian.collins4@nhs.net with feedback or queries
+
+<br>
+
+Overview of how to construct an Upset plot using R.
+
+More details on Upset plots from the creators of the tool are [here](https://jku-vds-lab.at/publications/2014_infovis_upset/).  Essentially upset plots are a method of visualising complex sets of data, where Venn and Euler diagrams are no longer useful due to the number and complexity of the set combinations. The R (UpsetR) and Python packages linked above have not been maintained and contain some areas, e.g. formatting of charts, that require development. It is advisable to use the packages listed below instead.  
+
+
+Other R packages can be used to create these plots, including [ggupset](https://github.com/const-ae/ggupset) and [ComplexUpset](https://github.com/krassowski/complex-upset), the latter is used in this walkthrough; this package also has a Python version.
+
+These plots are adaptable to many types of dataset - e.g. patients could be replaced with organisations, drugs could be replaced with diagnoses etc.
+
+---
+
+#### Data Preparation
+
+<br>
+
+```{r starting data}
+upsetData <- read_csv("upsetData.csv")
+```
+
+<br>
+
+Starting point:
+
+<br>
+
+
+```{r view start data}
+upsetData %>% head() %>% knitr::kable()
+```
+
+<br>
+
+**Note that these data have been modified for the purposes of producing this analysis. The drug names have been randomly sampled from the BNF, and the treatment combinations will therefore be meaningless and potentially nonsensical. These data are safe to share for the sole purpose of running this code.**  
+
+
+<br>
+
+As shown above, the items forming the combinations of interest are held in discrete fields, with additional columns allowing for multiple values (e.g. drugs prescribed, co-morbidities diagnosed) for each record. Each record represents one patient. Additional information - in this case age group, gender, and treatment length - can also form part of the visualisation.
+
+These data need to be transformed prior to creating the upset plot:  
+
+```{r pivot wider}
+upsetDataWide <- upsetData %>% pivot_longer(-c(pid, agegp, genderidentity, treatLength), names_to = "treatNo", values_to = "treatName") %>% na.omit() %>%
+   select(-treatNo) %>% mutate(flag = TRUE) %>% pivot_wider(names_from = treatName, values_from = flag) 
+```
+
+Initially, the data are transformed into a long format, with a logical flag allocated to denote patients receiving each treatment. NA values (these are present as patients are not receiving 6 separate treatments as allowed for in the original data format) are removed.
+
+The data are then transformed into a wide format, with each distinct item in the treatment variables being held in a separate column. Note that it was necessary to remove the 'treatNo' field that was created during the pivot_longer stage. Failing to do so would have entailed multiple records per patient being present in the data, which would have led to errors/failure when producing the Upset plots.  
+
+
+<br>
+
+Next, produce a vector of the distinct values of interest (e.g the column names produced in the previous stage):
+
+```{r treatment vector}
+Treatments <- colnames(upsetDataWide)[5:58]
+```
+
+<br>
+
+Next, fully convert the treatment variables to a logical form, by replacing NA values with 'FALSE'
+
+
+```{r NA to FALSE}
+upsetDataWide[Treatments][is.na(upsetDataWide[Treatments])] <- FALSE
+```
+
+<br>
+
+The data should now be in the correct for the ComplexUpset package:
+
+
+```{r Final data view}
+upsetDataWide %>% select(1:10) %>% head() %>% knitr::kable()
+```
+
+<br>
+
+The Upset plot is produced with the following code:
+
+<br>
+
+```{r Upset 1, fig.width=10, fig.height=8}
+upset(upsetDataWide, Treatments, width_ratio = 0.2, min_size = 1000)
+```
+
+<br>
+
+The **output is interpreted** as each intersection - a column in the main bar plot - being a count of the number of records within each combination. Combinations of items (intersections) are shown as connected dots in the table. A single dot represents records found only against that individual item.  
+
+In the example above there are 1097 records with two recorded treatments: 'Amifampridine 20mg tablets' & 'Phenobarbital 9mg/5ml oral liquid'.  
+
+The set values in the lower-left plot show the frequency of the occurrence of each item, regardless of combination.  
+
+---
+
+The 'width_ratio' relates to the ratio between the sets plots in the lower left of the output, and the main intersections plot.  
+
+The 'min_size' filters intersections above the specified minimum count. This can be used in combination with 'max.size' to analyse intersection counts within a specific range. Whilst this is an optional value, it is required in this example due to the very large number of intersections (> 3k) which would take a very long time to compute, and could not be shown in a single plot.  
+There are other methods to control the included intersections (e.g. by restricting the number of intersections), details are in the documentation.
+
+<br>
+
+---
+
+<br>
+
+The Upset plot can be combined with additional insights into the data. Here, a boxplot of treatment length is shown, with the columns corresponding to the upset intersections:  
+
+<br>
+
+
+```{r Upset 2, fig.width=12, fig.height=10}
+upset(upsetDataWide, Treatments, width_ratio = 0.25, min_size = 1000, 
+            themes = upset_modify_themes(
+        list(
+            'intersections_matrix' = theme(axis.text = element_text(size = 10)),
+            'Intersection size' = theme(axis.text = element_text(size = 10))                             
+            )
+        ),
+            base_annotations = list(
+              'Intersection size' = intersection_size(
+              text = list(
+                angle = 90,
+                size = 3.5,
+                colour = 'white',
+                vjust = 0.65,
+                hjust = 1.5
+              )
+            )
+          ),
+        annotations = list(
+          'Treatment Length' = (
+          ggplot(mapping = aes(y = treatLength)) +
+            geom_boxplot(na.rm = TRUE) +
+            scale_fill_viridis_d(name = "") +
+            ylab("Treatment Length - Years")
+        )
+      )) + patchwork::plot_layout(heights = c(0.25, 0.35, 0.4))
+```
+
+<br>
+
+The [patchwork](https://github.com/thomasp85/patchwork) library is used to control the relative size of the visualisation elements.  
+
+Formatting of elements within the upset plot takes place in the 'themes = upset_modify_theme' and 'base_annotations' areas, as shown above.
+
+<br>
+
+Multiple additional plots can be added:
+
+
+<br><br>
+
+
+```{r Upset 3, fig.width=14, fig.height=12}
+upset(upsetDataWide, Treatments, width_ratio = 0.25, min_size = 1000, 
+         themes = upset_modify_themes(
+        list(
+            'intersections_matrix' = theme(axis.text = element_text(size = 10)),
+            'Intersection size' = theme(axis.text = element_text(size = 10))                             
+            )
+        ),
+       base_annotations = list(
+              'Intersection size' = intersection_size(
+              text = list(
+                angle = 90,
+                size = 3.5,
+                colour = 'white',
+                vjust = 0.65,
+                hjust = 1.5
+              )
+            )
+          ),
+      annotations = list(
+        'Age' = (
+          ggplot(mapping = aes(fill = agegp)) +
+            geom_bar(stat = 'count', position = 'fill') +
+            scale_y_continuous(labels = scales::percent_format()) +
+            scale_fill_viridis_d(name = "") +
+            ylab("Age") +
+            theme(axis.text = element_text(size = 10))
+        ),
+        'Gender' = (
+          ggplot(mapping = aes(fill = genderidentity)) +
+            geom_bar(stat = 'count', position = 'fill') +
+            scale_y_continuous(labels = scales::percent_format()) +
+            scale_fill_manual(values = c("grey60", "burlywood4", "slateblue1", "slateblue2", "slateblue3", "slateblue4"), name = "") +
+            ylab("Gender") +
+            theme(axis.text = element_text(size = 10))
+        )
+      )) + patchwork::plot_layout(heights = c(0.2, 0.2, 0.25, 0.35)) + 
+            patchwork::plot_annotation(
+              title = "An Upset plot showing multiple treatment counts",
+              subtitle = "with explanatory sub-plots",
+              theme = theme(plot.title = element_text(size = 20), plot.subtitle = element_text(size = 16))
+            )
+```
+
+
+
+<br>
+
+
+Formatting of elements within the additional ggplot elements takes place within the standard 'theme' arguments, as shown above.
+
+Patchwork can be used to create an overall title, as above, and potentially for adding other annotations, grouping legends etc. 
+
+<br>
+
+
+---
+
+---
+
+
+
