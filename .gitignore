@@ -21,3 +21,7 @@ bgts_cgm/.csv
 # folders
 runTimeShinyPreRendered_data
 bgts_shiny_files
+udal_meds_upset/UpsetWalkthrough_cache
+
+# images
+*.png
