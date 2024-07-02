@@ -17,10 +17,10 @@ library(zoo)
 library(DT)
 
 # macbook
-#bgts_cgm_geog_icb <- readRDS("/Users/juliancollins/Repos/ShinyPractice/bgts_cgm/bgts_cgm_geog_icb.Rds")
+bgts_cgm_geog_icb <- readRDS("/Users/juliancollins/Repos/ShinyPractice/bgts_cgm/bgts_cgm_geog_icb.Rds")
 
 # windows
-bgts_cgm_geog_icb <- readRDS("bgts_cgm_geog_icb.Rds")
+#bgts_cgm_geog_icb <- readRDS("bgts_cgm_geog_icb.Rds")
 
 
 bgts_cgm_geog_icb$year_month2 <- as.yearmon(as.character(bgts_cgm_geog_icb$year_month3), "%Y%m")
@@ -31,17 +31,28 @@ bgts_cgm_geog_icb$year_month2 <- as.yearmon(as.character(bgts_cgm_geog_icb$year_
 
 ```{r out.height="100%"}
 #| panel: sidebar
+#| width: 50%
 
 # select icb
 selectizeInput("icb",
                 "Select ICB:",
                 choices = bgts_cgm_geog_icb$icb,
+                selected = c("Black Country", "Birmingham And Solihull"),
                 multiple = T)
+
+# select chemcical
+selectizeInput("bnf",
+                "Select BNF:",
+                choices = bgts_cgm_geog_icb$bnf_chemical_substance,
+                selected = "Glucose blood testing reagents",
+                multiple = F)
 
 # filter nic
 sliderInput("nic",
             "NIC range:",
-            min = 0, max = max(bgts_cgm_geog_icb$net_ingredient_cost), value = c(0, 1e5))
+            min = 1, max = 7.5e5,
+            value = c(1, 1.5e5),
+            round = 1)
 
 ```
 
@@ -65,13 +76,16 @@ plotlyOutput('line_items')
 ```{r}
 #| context: server
 
- nic_reactive <- reactive({bgts_cgm_geog_icb |> 
-        filter(bnf_chemical_substance == "Glucose blood testing reagents") |> 
-        filter(icb %in% input$icb) |> 
+ bgts_reactive <- reactive({
+        bgts_cgm_geog_icb |> 
         filter(year_month2 <= "Jul 2022") |> 
-        group_by(bnf_chemical_substance, icb, year_month2) |> 
-        summarise(net_ingredient_cost = sum(net_ingredient_cost)) |> 
+        group_by(icb, bnf_chemical_substance, year_month2) |> 
+        summarise(net_ingredient_cost = sum(net_ingredient_cost),
+                  items = sum(items)) |> 
         filter(net_ingredient_cost >= input$nic[1] & net_ingredient_cost <= input$nic[2]) |> 
+        filter(bnf_chemical_substance == input$bnf) |> 
+        filter(icb %in% input$icb) |> 
+        #filter(net_ingredient_cost2 >= input$nic) |> 
         ungroup() 
  })
 
@@ -83,7 +97,7 @@ plotlyOutput('line_items')
         need(input$icb, "Please select one or more ICB areas")
       )
      ggplotly(
-        nic_reactive() |> 
+        bgts_reactive() |> 
         ggplot(aes(x = year_month2, y = net_ingredient_cost, group = icb, colour = icb
                    )) +
         geom_line(linewidth = 1) +
@@ -96,8 +110,7 @@ plotlyOutput('line_items')
         scale_y_continuous(labels = comma, limits = c(0, NA)) +
         labs(x = "", y = "Net Ingredient Cost"),
         tooltip = 'text', dynamicTicks = T) |> 
-     layout(showlegend = F, 
-            xaxis = list(autorange = F, range = c(2021.25, 2022.583)))
+     layout(legend = list(title = "", orientation = 'h', xanchor = 'center', x = 0.5))
      #layout(showlegend = F)
         
     })
@@ -105,34 +118,26 @@ plotlyOutput('line_items')
 
 
 output$line_items <- renderPlotly({
-      #
-      sp <- bgts_cgm_geog_icb |> 
-        filter(bnf_chemical_substance == "Glucose blood testing reagents") |> 
-        filter(icb %in% input$icb) |> 
-        filter(year_month2 <= "Jul 2022") |> 
-        group_by(bnf_chemical_substance, icb, year_month2) |> 
-        summarise(items = sum(items)) |> 
-        ungroup() 
         # 
       validate(
         need(input$icb, "Please select one or more ICB areas")
       )
      ggplotly(
-        sp |> 
+        bgts_reactive() |> 
         ggplot(aes(x = year_month2, y = items, group = icb, colour = icb
                    )) +
         geom_line(linewidth = 1) +
         geom_point(aes(text = paste0(icb, "\n",
                                      year_month2, "\n",
                                      bnf_chemical_substance, "\n",
-                                     "NIC: £", prettyNum(items, big.mark = ","))), 
+                                     "Items: ", prettyNum(items, big.mark = ","))), 
                    shape = 21, fill = 'white', size = 2) +
         theme_minimal() +
         scale_y_continuous(labels = comma, limits = c(0, NA)) +
         labs(x = "", y = "Number of Items"),
         tooltip = 'text', dynamicTicks = T) |> 
-     layout(showlegend = F, 
-            xaxis = list(autorange = F, range = c(2021.25, 2022.583)))
+        layout(legend = list(title = "", orientation = 'h', xanchor = 'center', x = 0.5))
+     #layout(showlegend = F, xaxis = list(autorange = F, range = c(2021.25, 2022.583)))
      #layout(showlegend = F)
         
     })
