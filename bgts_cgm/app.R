@@ -27,6 +27,7 @@ ui <- fluidPage(
             selectizeInput("icb",
                         "Select ICB:",
                         choices = bgts_cgm_geog_icb$icb,
+                        selected = "Lincolnshire",
                         multiple = T
         )),
 
@@ -65,9 +66,9 @@ server <- function(input, output) {
         #                              net_ingredient_cost))) +
         theme_minimal() +
         scale_y_continuous(labels = comma, limits = c(0, NA)) +
-        labs(x = "", y = "Net Ingredient Cost")) |> 
+        labs(title = "BGTS Monthly NIC by ICB", x = "", y = "Net Ingredient Cost")) |> 
      #layout(tooltip = 'text', showlegend = F)
-     layout(showlegend = F)
+     layout(legend = list(title = "", orientation = 'h', xanchor = 'center', x = 0.5))
         
     })
 }
