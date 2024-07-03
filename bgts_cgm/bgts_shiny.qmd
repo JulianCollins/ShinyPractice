@@ -9,12 +9,22 @@ server: shiny
 
 ```{r}
 #| context: setup
+#| include: false
+
+# libraries
 library(shiny)
 library(plotly)
 library(tidyverse)
 library(scales)
 library(zoo)
 library(DT)
+
+```
+
+```{r}
+#| context: data
+#| include: true
+
 
 # macbook
 bgts_cgm_geog_icb <- readRDS("/Users/juliancollins/Repos/ShinyPractice/bgts_cgm/bgts_cgm_geog_icb.Rds")
@@ -29,9 +39,9 @@ bgts_cgm_geog_icb$year_month2 <- as.yearmon(as.character(bgts_cgm_geog_icb$year_
 
 # BGTS
 
-```{r out.height="100%"}
+```{r}
 #| panel: sidebar
-#| width: 50%
+#| title: "Options"
 
 # select icb
 selectizeInput("icb",
@@ -51,8 +61,8 @@ selectizeInput("bnf",
 sliderInput("nic",
             "NIC range:",
             min = 1, max = 7.5e5,
-            value = c(1, 1.5e5),
-            round = 1)
+            value = c(1.5e5, 4e5),
+            round = 10)
 
 ```
 

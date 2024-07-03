@@ -22,6 +22,7 @@ bgts_cgm/.csv
 runTimeShinyPreRendered_data
 bgts_shiny_files
 udal_meds_upset/UpsetWalkthrough_cache
+bgts_cgm/bgts_shiny_data/
 
 # images
 *.png
