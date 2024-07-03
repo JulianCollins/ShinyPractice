@@ -1,0 +1,31 @@
+---
+title: "diabetes_ojs"
+format: dashboard
+---
+
+```{r}
+
+library(tidyverse)
+library(zoo)
+
+```
+
+
+```{r}
+
+bgts_cgm_geog_icb <- readRDS("/Users/juliancollins/Repos/ShinyPractice/bgts_cgm/bgts_cgm_geog_icb.Rds")
+
+bgts_cgm_geog_icb$year_month2 <- as.yearmon(as.character(bgts_cgm_geog_icb$year_month3), "%Y%m")
+
+ojs_define(bgts = bgts_cgm_geog_icb)
+
+```
+
+
+
+```{ojs}
+
+
+data = FileAttachment()
+```
+
