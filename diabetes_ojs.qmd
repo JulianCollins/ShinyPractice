@@ -21,7 +21,7 @@ bgts_cgm_geog_icb <- bgts_cgm_geog_icb |>
   mutate(year_month4 = ymd(paste0(year_month3, "01")))
 
 bgts_cgm_geog_icb2 <- bgts_cgm_geog_icb |> 
-  group_by(icb, year_month4) |> 
+  group_by(icb, year_month3) |> 
   summarise(net_ingredient_cost = sum(net_ingredient_cost)) |> 
   ungroup() |> 
   distinct()
@@ -30,12 +30,19 @@ bgts_cgm_geog_icb2 <- bgts_cgm_geog_icb |>
 
 ojs_define(bgts_ojs = bgts_cgm_geog_icb2)
 
+
+```
+
+```{ojs}
+//| output: false
+
+bgts = transpose(bgts_ojs)
+
 ```
 
 
 ```{ojs}
-
-bgts = transpose(bgts_ojs)
+//| panel: sidebar
 
 viewof icb_dropdown = Inputs.select(
   bgts.map(d => d.icb), 
@@ -55,13 +62,13 @@ viewof icb_dropdown = Inputs.select(
 Plot.plot({
   y: {
     grid: true,
-    label: "↑ Unemployment (%)"
+    label: "something"
   },
   marks: [
     Plot.ruleY([0]),
     Plot.lineY(bgts, {
       filter: (d) => d.icb == icb_dropdown, 
-      x: "year_month4", 
+      x: "year_month3", 
       y: "net_ingredient_cost", 
       stroke: "icb", 
       tip: "x",
@@ -69,7 +76,7 @@ Plot.plot({
       }),
     Plot.text(bgts, Plot.selectLast({
     filter: (d) => d.icb == icb_dropdown, 
-    x: "year_month4", 
+    x: "year_month3", 
     y: "net_ingredient_cost", 
     z: "icb", 
     text: "icb", 
