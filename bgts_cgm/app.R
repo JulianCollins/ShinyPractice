@@ -8,7 +8,7 @@ library(scales)
 library(zoo)
 
 
-bgts_cgm_geog_icb <- readRDS("bgts_cgm_geog_icb.Rds")
+bgts_cgm_geog_icb <- readRDS("bgts_cgm/bgts_cgm_geog_icb.Rds")
   
 glimpse(bgts_cgm_geog_icb)
 

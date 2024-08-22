@@ -114,7 +114,7 @@ plotlyOutput('line_items')
         geom_point(aes(text = paste0(icb, "\n",
                                      year_month2, "\n",
                                      bnf_chemical_substance, "\n",
-                                     "NIC: £", prettyNum(net_ingredient_cost, big.mark = ","))), 
+                                     "NIC: £", prettyNum(round(net_ingredient_cost, 0), big.mark = ","))), 
                    shape = 21, fill = 'white', size = 2) +
         theme_minimal() +
         scale_y_continuous(labels = comma, limits = c(0, NA)) +
