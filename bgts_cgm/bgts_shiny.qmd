@@ -57,12 +57,12 @@ selectizeInput("bnf",
                 selected = "Glucose blood testing reagents",
                 multiple = F)
 
-# filter nic
-sliderInput("nic",
-            "NIC range:",
-            min = 1, max = 7.5e5,
-            value = c(1.5e5, 4e5),
-            round = 10)
+# # filter nic
+# sliderInput("nic",
+#             "NIC range:",
+#             min = 1, max = 7.5e5,
+#             value = c(1.5e5, 4e5),
+#             round = 10)
 
 ```
 
@@ -92,7 +92,7 @@ plotlyOutput('line_items')
         group_by(icb, bnf_chemical_substance, year_month2) |> 
         summarise(net_ingredient_cost = sum(net_ingredient_cost),
                   items = sum(items)) |> 
-        filter(net_ingredient_cost >= input$nic[1] & net_ingredient_cost <= input$nic[2]) |> 
+        # filter(net_ingredient_cost >= input$nic[1] & net_ingredient_cost <= input$nic[2]) |> 
         filter(bnf_chemical_substance == input$bnf) |> 
         filter(icb %in% input$icb) |> 
         #filter(net_ingredient_cost2 >= input$nic) |> 
