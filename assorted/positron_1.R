@@ -16,6 +16,6 @@ glimpse(diamonds)
 datasets::airquality
 datasets::EuStockMarkets
 
-glimpse(EuStockMarkets)
+glimpse(datasets::EuStockMarkets)
 
-dygraphs::dygraph(EuStockMarkets)
+dygraphs::dygraph(datasets::EuStockMarkets)
